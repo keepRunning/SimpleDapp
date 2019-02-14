@@ -1,4 +1,5 @@
 # SimpleDapp
+[![Build Status](https://travis-ci.com/keepRunning/SimpleDapp.svg?branch=master)](https://travis-ci.com/keepRunning/SimpleDapp)
 
 A simple static page Dapp - It stores and retrieves a string value from the blockchain
 
