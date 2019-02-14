@@ -56,81 +56,55 @@ else {
     console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
 }
 
-// if (typeof web3 !== 'undefined') {
-//     console.log('Metamask provider is used', web3.currentProvider);
-//     web3 = new Web3(web3.currentProvider);
-// } else {
-//     console.log('localhost being used');
-//     web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:7545"));
-// }
-
 function startLoad() {
 
-web3.eth.defaultAccount = web3.eth.accounts[0];
+    web3.eth.defaultAccount = web3.eth.accounts[0];
 
-let stringSaverContract = new web3.eth.Contract(contractAbi, '0xb9d4c3049b6c7340890d849b8b4888acc17cc0b5');
-let coinbase;
+    let stringSaverContract = new web3.eth.Contract(contractAbi, '0xb9d4c3049b6c7340890d849b8b4888acc17cc0b5');
+    let coinbase;
 
-web3.eth.getCoinbase()
-    .then((resCoinbase) => {
-        coinbase = resCoinbase;
-
-        stringSaverContract.methods.getKey().call({ from: coinbase }, (error, result) => {
-            console.log('Initial string: ', error, result);
-            document.getElementById('contractValue').innerHTML = result;
-        });
-        // let myContract = new web3.eth.Contract(contractAbi);            
-        // myContract.deploy({ data: contractBytecode })
-        // .send({
-        //     from: coinbase,
-        //     gas: 150000,
-        //     gasPrice: '30000000000'
-        // }, (error, transactionHash) => {
-        //     console.log('transactionHash', transactionHash);
-        // })
-        // .on('error', function (error) { })
-        // .on('transactionHash', function (transactionHash) { })
-        // .on('receipt', function (receipt) {
-        //     console.log('contractAddress', receipt.contractAddress)
-        // })
-        // .on('confirmation', function (confirmationNumber, receipt) { 
-        //     console.log('Htr556');
-        // });
-    });
-
-
-document.getElementById('buttonUpdateValue').addEventListener('click', () => {
-    let newValue = document.getElementById('newContractValue').value;
-    document.getElementById('newContractValue').value = '';
-    document.getElementById('loadingIcon').style.visibility = 'visible';
-
-    console.log('newContractValue (Unconfirmed)', newValue);
-    let transaction = stringSaverContract.methods.setKey(newValue).send({ from: coinbase }, (error, result) => {
-        if (error) {
-            console.log(result);
-        }
-    });
-
-    let funcUpdateVal = (confirmationNumber, receipt) => {
-        console.log('onConfirmation', confirmationNumber, receipt)
-
-        if(confirmationNumber == 4) {
-            // unsubscribe to further confirmations
-            transaction.off('confirmation', funcUpdateVal);
+    web3.eth.getCoinbase()
+        .then((resCoinbase) => {
+            coinbase = resCoinbase;
 
             stringSaverContract.methods.getKey().call({ from: coinbase }, (error, result) => {
-                if (error) {
-                    console.log(error, result);
-                } else {
-                    console.log('Confirmed string', result);
-                    document.getElementById('contractValue').innerHTML = result;
-                    document.getElementById('loadingIcon').style.visibility = 'hidden';
-                }
+                console.log('Initial string: ', error, result);
+                document.getElementById('contractValue').innerHTML = result;
             });
-        }
-    };
+        });
 
-    // add event handler
-    transaction.on('confirmation', funcUpdateVal);
-});
+    document.getElementById('buttonUpdateValue').addEventListener('click', () => {
+        let newValue = document.getElementById('newContractValue').value;
+        document.getElementById('newContractValue').value = '';
+        document.getElementById('loadingIcon').style.visibility = 'visible';
+
+        console.log('newContractValue (Unconfirmed)', newValue);
+        let transaction = stringSaverContract.methods.setKey(newValue).send({ from: coinbase }, (error, result) => {
+            if (error) {
+                console.log(result);
+            }
+        });
+
+        let funcUpdateVal = (confirmationNumber, receipt) => {
+            console.log('onConfirmation', confirmationNumber, receipt)
+
+            if (confirmationNumber == 4) {
+                // unsubscribe to further confirmations
+                transaction.off('confirmation', funcUpdateVal);
+
+                stringSaverContract.methods.getKey().call({ from: coinbase }, (error, result) => {
+                    if (error) {
+                        console.log(error, result);
+                    } else {
+                        console.log('Confirmed string', result);
+                        document.getElementById('contractValue').innerHTML = result;
+                        document.getElementById('loadingIcon').style.visibility = 'hidden';
+                    }
+                });
+            }
+        };
+
+        // add event handler
+        transaction.on('confirmation', funcUpdateVal);
+    });
 }
